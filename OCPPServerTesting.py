@@ -14,19 +14,34 @@ except ModuleNotFoundError:
 
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
-from ocpp.v16.enums import Action, RegistrationStatus
+from ocpp.v16.enums import Action, RegistrationStatus, ChargePointErrorCode, ChargePointStatus
 from ocpp.v16 import call_result
 
 logging.basicConfig(level=logging.INFO)
 
 
 class ChargePoint(cp):
+    def __init__(self, id, connection, response_timeout=30):
+        super().__init__(id, connection, response_timeout)
+
     @on(Action.BootNotification)
     def on_boot_notification(self, charge_point_vendor: str, charge_point_model: str, **kwargs):
         return call_result.BootNotificationPayload(
             current_time=datetime.utcnow().isoformat(),
             interval=10,
             status=RegistrationStatus.accepted
+        )
+    
+    @on(Action.Heartbeat)
+    def on_heartbeat(self):
+        return call_result.HeartbeatPayload(
+            current_time=datetime.utcnow().isoformat()
+        )
+
+    @on(Action.StatusNotification)
+    def on_status_notification(self, connector_id: int, error_code: ChargePointErrorCode, status: ChargePointStatus, **kwargs):
+        return call_result.StatusNotificationPayload(
+            
         )
 
 
@@ -64,7 +79,7 @@ async def main():
     server = await websockets.serve(
         on_connect,
         '0.0.0.0',
-        9000,
+        8080,
         subprotocols=['ocpp1.6']
     )
 
