@@ -14,7 +14,7 @@ except ModuleNotFoundError:
 
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as cp
-from ocpp.v16.enums import Action, RegistrationStatus, ChargePointErrorCode, ChargePointStatus
+from ocpp.v16.enums import Action, RegistrationStatus, ChargePointErrorCode, ChargePointStatus, AuthorizationStatus
 from ocpp.v16 import call_result
 
 logging.basicConfig(level=logging.INFO)
@@ -42,6 +42,32 @@ class ChargePoint(cp):
     def on_status_notification(self, connector_id: int, error_code: ChargePointErrorCode, status: ChargePointStatus, **kwargs):
         return call_result.StatusNotificationPayload(
             
+        )
+    
+    @on(Action.Authorize)
+    def on_authorize(self, id_tag: str):
+        return call_result.AuthorizePayload(
+            id_tag_info={ "status" : AuthorizationStatus.accepted, }
+        )
+    
+    @on(Action.StartTransaction)
+    def on_start_transaction(self, connector_id: int, id_tag: str, meter_start: int, timestamp: str, **kwargs):
+        test = 555
+        return call_result.StartTransactionPayload(
+            transaction_id=test, 
+            id_tag_info={ "status" : AuthorizationStatus.accepted, },
+        )
+
+    @on(Action.StopTransaction)
+    def on_stop_transaction(self, meter_stop: int, timestamp: str, transaction_id: int, **kwargs):
+        return call_result.StopTransactionPayload(
+            id_tag_info={ "status" : AuthorizationStatus.accepted, }
+        )
+    
+    @on(Action.MeterValues)
+    def on_meter_values(self, connector_id: int, meter_value=[], **kwargs ):
+        return call_result.MeterValuesPayload(
+
         )
 
 
